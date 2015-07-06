@@ -1,4 +1,7 @@
 # gMF
+
+CUDA based mean-field inference for dense CRF
+
 ```
 mkdir build
 cd build
