@@ -21,16 +21,27 @@ int main(int argc, char** argv){
         return -1;
     }
     
-    const int M = 10;
-    const float sigma_BF_xy = 40;
-    const float sigma_BF_rgb = 5;
-    const float sigma_GF_xy = 3;
-	const float weight_gaussian = 3.0;    
-    const float weight_bilateralfilter = 10.0;
-    const int no_iterations = 5;
+    //---------------   there are the parameters that you can play with --------------------------------------------------
+    const int M = 10;                                                                       // number of lables
+    const float sigma_BF_xy = 40;                                             // std of spatial kernel in bilateral filter
+    const float sigma_BF_rgb = 5;                                             // std of range kernel in bilateral filter
+    const float sigma_GF_xy = 3;                                               // std of Gaussian filter
+	const float weight_gaussian = 1.0;                                    // weight of gaussian filter
+    const float weight_bilateralfilter = 10.0;                        // weight of bilateral filter
+    const int no_iterations = 5;                                                  // number of interations
+    //---------------------------------------------------------------------------------------------------------------------------------------------
+    
+    cout << "--------- running gMF with following configuration: ---------"<<endl;
+    cout <<"M=10"<<endl;
+    cout <<"sigma_BF_xy = 40"<<endl;
+    cout <<"sigma_BF_rgb = "<<endl;
+    cout <<"sigma_GF_xy = 3"<<endl;
+    cout <<"weight_gaussian = 1.0"<<endl;
+    cout <<"weight_bilateralfilter = 10.0"<<endl;
+    cout <<"no_iterations = 5"<<endl;
+    cout << "-----------------------------------------------------------------------------------"<<endl;
     
     int W, H;
-
     std::string image_path = argv[1];
     std::string anno_path = argv[2];
     std::string output_path = argv[3];
@@ -79,7 +90,6 @@ int main(int argc, char** argv){
     cv::Mat out_img; out_img.create(H,W,CV_8UC3); 
     draw_image_from_labeling(out_img,labeling_data,W,H);
     
-
 	std::vector<int> compression_params;
 	compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
 	compression_params.push_back(9);
