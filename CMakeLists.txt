@@ -35,6 +35,20 @@ gMF_Lib/objects/gMF_BF_info.h
 gMF_Lib/objects/gMF_GF_info.h
 )
 
+set(GSLIC_LIB
+gSLIC_Lib/engines/gSLIC_core_engine.h
+gSLIC_Lib/engines/gSLIC_seg_engine.h
+gSLIC_Lib/engines/gSLIC_seg_engine_GPU.h
+gSLIC_Lib/engines/gSLIC_seg_engine_shared.h
+gSLIC_Lib/engines/gSLIC_core_engine.cpp
+gSLIC_Lib/engines/gSLIC_seg_engine.cpp
+gSLIC_Lib/engines/gSLIC_seg_engine_GPU.cu
+gSLIC_Lib/objects/gSLIC_settings.h
+gSLIC_Lib/objects/gSLIC_spixel_info.h
+gSLIC_Lib/gSLIC_defines.h
+gSLIC_Lib/gSLIC.h
+)
+
 list(APPEND "-std=c++11 -ftree-vectorize")
 SOURCE_GROUP(gMF_Lib FILES ${GMF_LIB})
 
@@ -46,6 +60,14 @@ target_link_libraries(gMF_Lib ${CUDA_LIBRARY})
 add_executable(gMF demo.cpp NVTimer.h image_helper.h)
 target_link_libraries(gMF gMF_Lib ${OpenCV_LIBS})
 
+
+cuda_add_library(gSLIC2_lib
+			${GSLIC_LIB}
+			OPTIONS -gencode arch=compute_30,code=compute_30)
+target_link_libraries(gSLIC2_lib ${CUDA_LIBRARY})
+
+add_executable(gSLIC demo_gslic.cpp)
+target_link_libraries(gSLIC gSLIC2_lib ${OpenCV_LIBS})
 
 #add_executable(demo_debug demo_backup.cpp NVTimer.h)
 #target_link_libraries(demo_debug gMF_Lib ${OpenCV_LIBS})
