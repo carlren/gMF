@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 project(gMF)
-INCLUDE (FindPkgConfig)
 #SET (CMAKE_VERBOSE_MAKEFILE true)
 
 find_package(CUDA REQUIRED)
@@ -19,9 +18,7 @@ if(APPLE)
 endif(APPLE)
 
 include_directories(${CUDA_INCLUDE_DIRS})
-#pkg_search_module (OPENCV opencv REQUIRED)
 include_directories(${OPENCV_INCLUDE_DIRS})
-include_directories(include)
 add_subdirectory(ORUtils)
 
 set(GMF_LIB
@@ -48,8 +45,6 @@ target_link_libraries(gMF_Lib ${CUDA_LIBRARY})
 
 add_executable(gMF demo.cpp NVTimer.h image_helper.h)
 target_link_libraries(gMF gMF_Lib ${OpenCV_LIBS})
-
-#message("${OPENCV_LDFLAGS}")
 
 
 #add_executable(demo_debug demo_backup.cpp NVTimer.h)

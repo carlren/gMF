@@ -23,10 +23,10 @@ int main(int argc, char** argv){
     
     //---------------   there are the parameters that you can play with --------------------------------------------------
     const int M = 10;                                                                       // number of lables
-    const float sigma_BF_xy = 40;                                             // std of spatial kernel in bilateral filter
+    const float sigma_BF_xy = 30;                                             // std of spatial kernel in bilateral filter
     const float sigma_BF_rgb = 5;                                             // std of range kernel in bilateral filter
     const float sigma_GF_xy = 3;                                               // std of Gaussian filter
-	const float weight_gaussian = 1.0;                                    // weight of gaussian filter
+	const float weight_gaussian = 5.0;                                    // weight of gaussian filter
     const float weight_bilateralfilter = 10.0;                        // weight of bilateral filter
     const int no_iterations = 5;                                                  // number of interations
     //---------------------------------------------------------------------------------------------------------------------------------------------
