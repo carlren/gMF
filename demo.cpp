@@ -31,14 +31,15 @@ int main(int argc, char** argv){
     const int no_iterations = 5;                                                  // number of interations
     //---------------------------------------------------------------------------------------------------------------------------------------------
     
+    
     cout << "--------- running gMF with following configuration: ---------"<<endl;
     cout <<"M=10"<<endl;
-    cout <<"sigma_BF_xy = 40"<<endl;
-    cout <<"sigma_BF_rgb = "<<endl;
-    cout <<"sigma_GF_xy = 3"<<endl;
-    cout <<"weight_gaussian = 1.0"<<endl;
-    cout <<"weight_bilateralfilter = 10.0"<<endl;
-    cout <<"no_iterations = 5"<<endl;
+    cout <<"sigma_BF_xy ="<<sigma_BF_xy<<endl;
+    cout <<"sigma_BF_rgb = "<<sigma_BF_rgb<<endl;
+    cout <<"sigma_GF_xy = "<<sigma_GF_xy<<endl;
+    cout <<"weight_gaussian = "<<weight_gaussian<<endl;
+    cout <<"weight_bilateralfilter = "<<weight_bilateralfilter<<endl;
+    cout <<"no_iterations = "<<no_iterations<<endl;
     cout << "-----------------------------------------------------------------------------------"<<endl;
     
     int W, H;
