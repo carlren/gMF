@@ -1,11 +1,130 @@
 #pragma once
 #include "gMF_fileter_engine_shared.h"
+#include "../../gSLIC_Lib/objects/gSLIC_spixel_info.h"
 
 // safe to include namespace here, since it's only included in the .cu file
 using namespace std;
 using namespace gMF;
 
 static const _CPU_AND_GPU_CONSTANT_ unsigned char gaussian3[3] = { 1, 2, 1 };
+
+// ----------------------------------------------------
+//
+//	filtering using superpixel
+//
+// ----------------------------------------------------
+
+__global__ void accum_filter_data_in_spixel_device(
+        const gSLIC::objects::spixel_info*  spixel_center,
+        const float         *fdata_in_ptr,
+        const int             *gslic_idx_ptr,
+        float                     *gslic_accum_data_ptr,
+        float                     *gslic_accum_weight_ptr,
+        Vector2i               slic_map_size,
+        Vector2i               image_size,
+        int                          radius,
+        int                          dim
+        )
+{
+    int x = threadIdx.x + blockIdx.x * blockDim.x, y = threadIdx.y + blockIdx.y * blockDim.y;
+    if (x > slic_map_size.x - 1 || y > slic_map_size.y - 1) return;
+    
+    int spixel_idx = y * slic_map_size.x + x;
+    const gSLIC::objects::spixel_info& spixel_c = spixel_center[spixel_idx];
+  
+    
+	float data_sum[MAX_FILTER_DIM] = { 0.0f };
+    float weight_sum = 0;
+    
+    for (int i=-radius; i<=radius; i++)
+        for (int j=-radius; j<=radius; j++)
+        {
+            int ii = spixel_c.center.y + i;
+			int jj = spixel_c.center.x + j;
+
+			if (ii < 0 || ii >image_size.y - 1 || jj <0 || jj>image_size.x - 1) continue;
+            
+            int img_idx = ii * image_size.x + jj;
+            if (gslic_idx_ptr[img_idx]!=spixel_idx) continue;
+            
+            for (int k = 0; k < dim; k++)
+				data_sum[k] += fdata_in_ptr[img_idx*dim + k];
+            weight_sum++;
+        }
+        
+    for (int k = 0; k < dim; k++) gslic_accum_data_ptr[spixel_idx*dim + k] = data_sum[k];
+    gslic_accum_weight_ptr[spixel_idx] = weight_sum;
+    
+}
+
+__global__ void filter_bilateral_superpixel_device(
+	const gSLIC::objects::spixel_info*  spixel_center,
+    const float          *gslic_accum_data_ptr,
+    const float          *gslic_weight_ptr,
+    const int              *gslic_idx_ptr,    
+    const Vector3f		*in_img_ptr,   
+	const float			*fdata_in_ptr, 
+	float                       *fdata_out_ptr, 
+    Vector2i               slic_map_size,
+	Vector2i			image_size, 
+	float				*gaussian_table_ptr, 
+	float				*euclid_table_ptr, 
+	int					dim,
+	int					radius,
+	float				weight)
+{
+	int x = threadIdx.x + blockIdx.x * blockDim.x, y = threadIdx.y + blockIdx.y * blockDim.y;
+	if (x > image_size.x - 1 || y > image_size.y - 1) return;
+
+	int idx_center = y * image_size.x + x;
+
+	float factor_sum = 0.0f;
+	float data_sum[MAX_FILTER_DIM] = { 0.0f };
+
+	const Vector3f& pixel_c = in_img_ptr[idx_center];
+    const int spixel_idx = gslic_idx_ptr[idx_center];
+    
+    const int xs = spixel_idx % slic_map_size.x;
+    const int ys = spixel_idx / slic_map_size.x;
+   
+    // adding original data in there
+    factor_sum=gaussian_table_ptr[0]
+            *gaussian_table_ptr[0]
+            *euclid_table_ptr[0]
+            *euclid_table_ptr[0]
+            *euclid_table_ptr[0];
+    
+    for (int k = 0; k < dim; k++) data_sum[k] += fdata_in_ptr[(idx_center)*dim + k] * factor_sum;
+    
+    
+	for (int i = -radius; i <= radius; i++)
+		for (int j = -radius; j <= radius; j++)
+		{
+			int ii = ys + i;
+			int jj = xs + j;
+
+			if (ii < 0 || ii >slic_map_size.y - 1 || jj <0 || jj>slic_map_size.x - 1)
+				continue;
+
+            const gSLIC::objects::spixel_info& spixel_s = spixel_center[ii * slic_map_size.x + jj];
+
+			float factor = gaussian_table_ptr[(int)abs(x - spixel_s.center.x)]
+				* gaussian_table_ptr[(int)abs(y - spixel_s.center.y)]
+				* euclid_table_ptr[(int)abs(pixel_c.r - spixel_s.color_info.r)]
+				* euclid_table_ptr[(int)abs(pixel_c.g - spixel_s.color_info.g)]
+				* euclid_table_ptr[(int)abs(pixel_c.b - spixel_s.color_info.b)];
+            
+			factor_sum += factor * gslic_weight_ptr[ii * slic_map_size.x + jj];
+			for (int k = 0; k < dim; k++)
+				data_sum[k] += gslic_accum_data_ptr[(ii * slic_map_size.x + jj)*dim + k] * factor;
+		}
+
+		for (int k = 0; k < dim; k++)
+			fdata_out_ptr[idx_center*dim + k] += weight * data_sum[k] / factor_sum;        
+}
+
+
+
 
 // ----------------------------------------------------
 //

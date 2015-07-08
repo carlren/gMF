@@ -2,7 +2,7 @@
 #include "../gSLIC_defines.h"
 #include "../objects/gSLIC_spixel_info.h"
 
-_CPU_AND_GPU_CODE_ inline void rgb2xyz(const gSLIC::Vector4u& pix_in, gSLIC::Vector4f& pix_out)
+_CPU_AND_GPU_CODE_ inline void rgb2xyz(const gSLIC::Vector3u& pix_in, gSLIC::Vector3f& pix_out)
 {
 	float _b = (float)pix_in.x * 0.0039216f;
 	float _g = (float)pix_in.y * 0.0039216f;
@@ -14,7 +14,7 @@ _CPU_AND_GPU_CODE_ inline void rgb2xyz(const gSLIC::Vector4u& pix_in, gSLIC::Vec
 
 }
 
-_CPU_AND_GPU_CODE_ inline void rgb2CIELab(const gSLIC::Vector4u& pix_in, gSLIC::Vector4f& pix_out)
+_CPU_AND_GPU_CODE_ inline void rgb2CIELab(const gSLIC::Vector3u& pix_in, gSLIC::Vector3f& pix_out)
 {
 	float _b = (float)pix_in.x * 0.0039216f;
 	float _g = (float)pix_in.y * 0.0039216f;
@@ -48,7 +48,7 @@ _CPU_AND_GPU_CODE_ inline void rgb2CIELab(const gSLIC::Vector4u& pix_in, gSLIC::
 	pix_out.z = 200.0*(fy - fz);
 }
 
-_CPU_AND_GPU_CODE_ inline void cvt_img_space_shared(const gSLIC::Vector4u* inimg, gSLIC::Vector4f* outimg, const gSLIC::Vector2i& img_size, int x, int y, const gSLIC::COLOR_SPACE& color_space)
+_CPU_AND_GPU_CODE_ inline void cvt_img_space_shared(const gSLIC::Vector3u* inimg, gSLIC::Vector3f* outimg, const gSLIC::Vector2i& img_size, int x, int y, const gSLIC::COLOR_SPACE& color_space)
 {
 	int idx = y * img_size.x + x;
 
@@ -68,7 +68,7 @@ _CPU_AND_GPU_CODE_ inline void cvt_img_space_shared(const gSLIC::Vector4u* inimg
 	}
 }
 
-_CPU_AND_GPU_CODE_ inline void init_cluster_centers_shared(const gSLIC::Vector4f* inimg, gSLIC::objects::spixel_info* out_spixel, gSLIC::Vector2i map_size, gSLIC::Vector2i img_size, int spixel_size, int x, int y)
+_CPU_AND_GPU_CODE_ inline void init_cluster_centers_shared(const gSLIC::Vector3f* inimg, gSLIC::objects::spixel_info* out_spixel, gSLIC::Vector2i map_size, gSLIC::Vector2i img_size, int spixel_size, int x, int y)
 {
 	int cluster_idx = y * map_size.x + x;
 
@@ -87,7 +87,7 @@ _CPU_AND_GPU_CODE_ inline void init_cluster_centers_shared(const gSLIC::Vector4f
 	out_spixel[cluster_idx].no_pixels = 0;
 }
 
-_CPU_AND_GPU_CODE_ inline float compute_slic_distance(const gSLIC::Vector4f& pix, int x, int y, const gSLIC::objects::spixel_info& center_info, float weight, float normalizer_xy, float normalizer_color)
+_CPU_AND_GPU_CODE_ inline float compute_slic_distance(const gSLIC::Vector3f& pix, int x, int y, const gSLIC::objects::spixel_info& center_info, float weight, float normalizer_xy, float normalizer_color)
 {
 	float dcolor = (pix.x - center_info.color_info.x)*(pix.x - center_info.color_info.x)
 				 + (pix.y - center_info.color_info.y)*(pix.y - center_info.color_info.y)
@@ -101,7 +101,7 @@ _CPU_AND_GPU_CODE_ inline float compute_slic_distance(const gSLIC::Vector4f& pix
 	return sqrtf(retval);
 }
 
-_CPU_AND_GPU_CODE_ inline void find_center_association_shared(const gSLIC::Vector4f* inimg, const gSLIC::objects::spixel_info* in_spixel_map, int* out_idx_img, gSLIC::Vector2i map_size, gSLIC::Vector2i img_size, int spixel_size, float weight, int x, int y, float max_xy_dist, float max_color_dist)
+_CPU_AND_GPU_CODE_ inline void find_center_association_shared(const gSLIC::Vector3f* inimg, const gSLIC::objects::spixel_info* in_spixel_map, int* out_idx_img, gSLIC::Vector2i map_size, gSLIC::Vector2i img_size, int spixel_size, float weight, int x, int y, float max_xy_dist, float max_color_dist)
 {
 	int idx_img = y * img_size.x + x;
 
@@ -131,7 +131,7 @@ _CPU_AND_GPU_CODE_ inline void find_center_association_shared(const gSLIC::Vecto
 	if (minidx >= 0) out_idx_img[idx_img] = minidx;
 }
 
-_CPU_AND_GPU_CODE_ inline void draw_superpixel_boundry_shared(const int* idx_img, gSLIC::Vector4u* sourceimg, gSLIC::Vector4u* outimg, gSLIC::Vector2i img_size, int x, int y)
+_CPU_AND_GPU_CODE_ inline void draw_superpixel_boundry_shared(const int* idx_img, gSLIC::Vector3u* sourceimg, gSLIC::Vector3u* outimg, gSLIC::Vector2i img_size, int x, int y)
 {
 	int idx = y * img_size.x + x;
 
@@ -140,7 +140,7 @@ _CPU_AND_GPU_CODE_ inline void draw_superpixel_boundry_shared(const int* idx_img
 	 || idx_img[idx] != idx_img[(y - 1)*img_size.x + x]
 	 || idx_img[idx] != idx_img[(y + 1)*img_size.x + x])
 	{
-		outimg[idx] = gSLIC::Vector4u(0,0,255,0);
+		outimg[idx] = gSLIC::Vector3u(0,0,255);
 	}
 	else
 	{
@@ -153,7 +153,7 @@ _CPU_AND_GPU_CODE_ inline void finalize_reduction_result_shared(const gSLIC::obj
 	int spixel_idx = y * map_size.x + x;
 
 	spixel_list[spixel_idx].center = gSLIC::Vector2f(0, 0);
-	spixel_list[spixel_idx].color_info = gSLIC::Vector4f(0, 0, 0, 0);
+	spixel_list[spixel_idx].color_info = gSLIC::Vector3f(0, 0, 0);
 	spixel_list[spixel_idx].no_pixels = 0;
 
 	for (int i = 0; i < no_blocks_per_spixel; i++)

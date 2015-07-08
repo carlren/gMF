@@ -8,7 +8,7 @@ namespace gSLIC
 		struct spixel_info
 		{
 			Vector2f center;
-			Vector4f color_info;
+			Vector3f color_info;
 			int id;
 			int no_pixels;
 		};

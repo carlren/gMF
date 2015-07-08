@@ -56,9 +56,11 @@ namespace gSLIC
 	//
 	//------------------------------------------------------
 
+	typedef  ORUtils::Image<Vector3f> Float3Image;
 	typedef  ORUtils::Image<Vector4f> Float4Image;
 	typedef  ORUtils::Image<int> IntImage;
 	typedef  ORUtils::Image<Vector4u> UChar4Image;
+    typedef  ORUtils::Image<Vector3u> UChar3Image;
 
 	//------------------------------------------------------
 	// 

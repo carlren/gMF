@@ -14,7 +14,7 @@ namespace gSLIC
 			IntImage* tmp_idx_img;
 
 		protected:
-			void Cvt_Img_Space(UChar4Image* inimg, Float4Image* outimg, COLOR_SPACE color_space);
+			void Cvt_Img_Space(UChar3Image* inimg, Float3Image* outimg, COLOR_SPACE color_space);
 			void Init_Cluster_Centers();
 			void Find_Center_Association();
 			void Update_Cluster_Center();
@@ -25,7 +25,7 @@ namespace gSLIC
 			seg_engine_GPU(const objects::settings& in_settings);
 			~seg_engine_GPU();
 
-			void Draw_Segmentation_Result(UChar4Image* out_img);
+			void Draw_Segmentation_Result(UChar3Image* out_img);
 		};
 	}
 }

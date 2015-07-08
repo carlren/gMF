@@ -52,24 +52,25 @@ gSLIC_Lib/gSLIC.h
 list(APPEND "-std=c++11 -ftree-vectorize")
 SOURCE_GROUP(gMF_Lib FILES ${GMF_LIB})
 
-cuda_add_library(gMF_Lib
-			${GMF_LIB}
-			OPTIONS -gencode arch=compute_30,code=compute_30)
-target_link_libraries(gMF_Lib ${CUDA_LIBRARY})
-
-add_executable(gMF demo.cpp NVTimer.h image_helper.h)
-target_link_libraries(gMF gMF_Lib ${OpenCV_LIBS})
-
-
+# libraries
 cuda_add_library(gSLIC2_lib
 			${GSLIC_LIB}
 			OPTIONS -gencode arch=compute_30,code=compute_30)
 target_link_libraries(gSLIC2_lib ${CUDA_LIBRARY})
 
-add_executable(gSLIC demo_gslic.cpp)
-target_link_libraries(gSLIC gSLIC2_lib ${OpenCV_LIBS})
 
-#add_executable(demo_debug demo_backup.cpp NVTimer.h)
-#target_link_libraries(demo_debug gMF_Lib ${OpenCV_LIBS})
-#${OpenCV_LIBS}
+cuda_add_library(gMF_Lib
+			${GMF_LIB}
+			OPTIONS -gencode arch=compute_30,code=compute_30)
+target_link_libraries(gMF_Lib ${CUDA_LIBRARY} gSLIC2_lib)
+
+
+add_executable(gMF demo.cpp NVTimer.h image_helper.h)
+target_link_libraries(gMF gMF_Lib ${OpenCV_LIBS})
+
+add_executable(demo_debug demo_backup.cpp NVTimer.h)
+target_link_libraries(demo_debug gMF_Lib ${OpenCV_LIBS})
+
+add_executable(gSLIC demo_gslic.cpp)
+target_link_libraries(gSLIC gSLIC2_lib ${OpenCV_LIBS} )
 

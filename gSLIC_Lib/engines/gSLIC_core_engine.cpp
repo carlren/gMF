@@ -1,4 +1,3 @@
-#pragma once
 #include "gSLIC_core_engine.h"
 #include <fstream>
 
@@ -15,7 +14,7 @@ gSLIC::engines::core_engine::~core_engine()
 		delete slic_seg_engine;
 }
 
-void gSLIC::engines::core_engine::Process_Frame(UChar4Image* in_img)
+void gSLIC::engines::core_engine::Process_Frame(UChar3Image* in_img)
 {
 	slic_seg_engine->Perform_Segmentation(in_img);
 }
@@ -25,7 +24,7 @@ const IntImage * gSLIC::engines::core_engine::Get_Seg_Res()
 	return slic_seg_engine->Get_Seg_Mask();
 }
 
-void gSLIC::engines::core_engine::Draw_Segmentation_Result(UChar4Image* out_img)
+void gSLIC::engines::core_engine::Draw_Segmentation_Result(UChar3Image* out_img)
 {
 	slic_seg_engine->Draw_Segmentation_Result(out_img);
 }
