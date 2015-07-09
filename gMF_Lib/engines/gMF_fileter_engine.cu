@@ -169,7 +169,10 @@ void gMF::filter_engine::filter_bilateral(float weight, int dim, int w, int h, B
     // post process the result
 //    bilateral_filter_post_processing(bf_info,out_data_ptr);
       
-      filter_bilateral_superpixel(weight,dim,w,h,bf_info,additive,out_data_ptr);
+   //filter_bilateral_superpixel(weight,dim,w,h,bf_info,additive,out_data_ptr);
+    
+    filter_bilateral_superpixel(weight,dim,w,h,bf_info,additive);  
+    bilateral_filter_post_processing(bf_info,out_data_ptr);
 
 }
 

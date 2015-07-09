@@ -74,3 +74,5 @@ target_link_libraries(demo_debug gMF_Lib ${OpenCV_LIBS})
 add_executable(gSLIC demo_gslic.cpp)
 target_link_libraries(gSLIC gSLIC2_lib ${OpenCV_LIBS} )
 
+add_executable(gMF_batch batch.cpp NVTimer.h image_helper.h)
+target_link_libraries(gMF_batch gMF_Lib ${OpenCV_LIBS})

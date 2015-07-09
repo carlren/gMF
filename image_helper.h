@@ -39,7 +39,7 @@ void read_labling_from_image(int* out_labling, const Mat& in_img, int w, int h, 
 
 void labeling_to_unary(float *out_unary, const int* in_labling, int w, int h, int M)
 {
-    const float GT_PROB = 0.8;
+    const float GT_PROB = 0.5;
     const float u_energy = log( 1.0 / M );
 	const float n_energy = log( (1.0 - GT_PROB) / (M-1) );
 	const float p_energy = log( GT_PROB );
