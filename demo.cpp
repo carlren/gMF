@@ -64,8 +64,7 @@ int main(int argc, char** argv){
 
     gMF::inference_engine *my_CRF = new gMF::inference_engine(W,H,M);
 	gMF::BF_info *my_BF_info = new gMF::BF_info(sigma_BF_xy, sigma_BF_rgb);
-    gMF::BF_info *my_GF_info = new gMF::BF_info(sigma_GF_xy, 10000);
-    //gMF::GF_info *my_GF_info = new gMF::GF_info(sigma_GF_xy);
+    gMF::GF_info *my_GF_info = new gMF::GF_info(sigma_GF_xy);
 
     my_CRF->load_reference_image(in_img.data, W, H);
     my_CRF->load_compatibility_function(pott_model_data);
@@ -77,8 +76,7 @@ int main(int argc, char** argv){
         sdkResetTimer(&my_timer); sdkStartTimer(&my_timer);
 
         my_CRF->filter_bilateral(weight_bilateralfilter, M, W, H, my_BF_info, false);
-        my_CRF->filter_bilateral(weight_gaussian, M, W, H, my_GF_info, true);
-        //my_CRF->filter_gaussian(weight_gaussian,M,W,H,my_GF_info,true);
+        my_CRF->filter_gaussian(weight_gaussian,M,W,H,my_GF_info,true);
         my_CRF->apply_compatibility_transform();
         my_CRF->substract_update_from_unary_potential();
         my_CRF->exp_and_normalize();
