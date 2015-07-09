@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 project(gMF)
-INCLUDE (FindPkgConfig)
 #SET (CMAKE_VERBOSE_MAKEFILE true)
 
 find_package(CUDA REQUIRED)
@@ -19,9 +18,7 @@ if(APPLE)
 endif(APPLE)
 
 include_directories(${CUDA_INCLUDE_DIRS})
-#pkg_search_module (OPENCV opencv REQUIRED)
 include_directories(${OPENCV_INCLUDE_DIRS})
-include_directories(include)
 add_subdirectory(ORUtils)
 
 set(GMF_LIB
@@ -38,21 +35,44 @@ gMF_Lib/objects/gMF_BF_info.h
 gMF_Lib/objects/gMF_GF_info.h
 )
 
+set(GSLIC_LIB
+gSLIC_Lib/engines/gSLIC_core_engine.h
+gSLIC_Lib/engines/gSLIC_seg_engine.h
+gSLIC_Lib/engines/gSLIC_seg_engine_GPU.h
+gSLIC_Lib/engines/gSLIC_seg_engine_shared.h
+gSLIC_Lib/engines/gSLIC_core_engine.cpp
+gSLIC_Lib/engines/gSLIC_seg_engine.cpp
+gSLIC_Lib/engines/gSLIC_seg_engine_GPU.cu
+gSLIC_Lib/objects/gSLIC_settings.h
+gSLIC_Lib/objects/gSLIC_spixel_info.h
+gSLIC_Lib/gSLIC_defines.h
+gSLIC_Lib/gSLIC.h
+)
+
 list(APPEND "-std=c++11 -ftree-vectorize")
 SOURCE_GROUP(gMF_Lib FILES ${GMF_LIB})
+
+# libraries
+cuda_add_library(gSLIC2_lib
+			${GSLIC_LIB}
+			OPTIONS -gencode arch=compute_30,code=compute_30)
+target_link_libraries(gSLIC2_lib ${CUDA_LIBRARY})
+
 
 cuda_add_library(gMF_Lib
 			${GMF_LIB}
 			OPTIONS -gencode arch=compute_30,code=compute_30)
-target_link_libraries(gMF_Lib ${CUDA_LIBRARY})
+target_link_libraries(gMF_Lib ${CUDA_LIBRARY} gSLIC2_lib)
+
 
 add_executable(gMF demo.cpp NVTimer.h image_helper.h)
 target_link_libraries(gMF gMF_Lib ${OpenCV_LIBS})
 
-#message("${OPENCV_LDFLAGS}")
+add_executable(demo_debug demo_backup.cpp NVTimer.h)
+target_link_libraries(demo_debug gMF_Lib ${OpenCV_LIBS})
 
+add_executable(gSLIC demo_gslic.cpp)
+target_link_libraries(gSLIC gSLIC2_lib ${OpenCV_LIBS} )
 
-#add_executable(demo_debug demo_backup.cpp NVTimer.h)
-#target_link_libraries(demo_debug gMF_Lib ${OpenCV_LIBS})
-#${OpenCV_LIBS}
-
+add_executable(gMF_batch batch.cpp NVTimer.h image_helper.h)
+target_link_libraries(gMF_batch gMF_Lib ${OpenCV_LIBS})

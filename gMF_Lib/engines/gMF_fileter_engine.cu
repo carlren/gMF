@@ -29,6 +29,21 @@ filter_engine::filter_engine(int img_w, int img_h, int dim)
     accum_weight = new FloatArray(subsample_size.x * subsample_size.y, true, true);
 
 	sigma_rgb = -1.0;
+    
+    
+    // gSLIC plug-in
+	gslic_settings.img_size.x = img_w;
+	gslic_settings.img_size.y = img_h;
+	gslic_settings.spixel_size = 16;
+	gslic_settings.coh_weight = 0.6f;
+	gslic_settings.no_iters = 3;
+	gslic_settings.color_space = gSLIC::RGB;
+	gslic_settings.seg_method = gSLIC::GIVEN_SIZE;
+	gslic_settings.do_enforce_connectivity = false;
+    
+    gslic_engine = new gSLIC::engines::seg_engine_GPU(gslic_settings);
+    gslic_accum_fdata = new FloatArray(gslic_engine->Get_sPixel_Map(false)->dataSize*filter_data_dim,true,true);
+    gslic_accum_weight = new FloatArray(gslic_engine->Get_sPixel_Map(false)->dataSize,true,true);
 }
 
 gMF::filter_engine::~filter_engine()
@@ -44,6 +59,11 @@ gMF::filter_engine::~filter_engine()
 
     delete accum_data;
     delete accum_weight;
+    
+    // gSLIC plug-in
+    delete gslic_engine;
+    delete gslic_accum_fdata;
+    delete gslic_accum_weight;
 }
 
 // ----------------------------------------------------
@@ -66,6 +86,8 @@ void gMF::filter_engine::load_reference_image(uchar* in_img_ptr, int w, int h)
 	}
 
 	reference_rgb_image->UpdateDeviceFromHost();
+    
+    gslic_segmented = false;
 }
 
 
@@ -139,12 +161,17 @@ void gMF::filter_engine::filter_bilateral(float weight, int dim, int w, int h, B
 
 
 // option 1: use splat-slice with passion sampling
-//    filter_bilateral_splat_slice(weight, dim, w, h, bf_info, additive);
+//    filter_bilateral_splat_slice(weight, dim, w, h, bf_info, additive, out_data_ptr);
 
 // option 2: use direct passion sampling
-      filter_bilateral_approximate(weight, dim, w, h, bf_info, additive);
+//      filter_bilateral_approximate(weight, dim, w, h, bf_info, additive, out_data_ptr);
 
     // post process the result
+//    bilateral_filter_post_processing(bf_info,out_data_ptr);
+      
+   //filter_bilateral_superpixel(weight,dim,w,h,bf_info,additive,out_data_ptr);
+    
+    filter_bilateral_superpixel(weight,dim,w,h,bf_info,additive);  
     bilateral_filter_post_processing(bf_info,out_data_ptr);
 
 }
@@ -311,7 +338,99 @@ void gMF::filter_engine::filter_bilateral_splat_slice(float weight, int dim, int
     }
 }
 
-void gMF::filter_engine::filter_gaussian(float* out_data_ptr, float weight, int dim, int w, int h, GF_info* gf_info, bool additive)
+void gMF::filter_engine::filter_bilateral_superpixel(float weight, int dim, int w, int h, BF_info *bf_info, bool additive, float *out_data_ptr)
+{
+    if (!gslic_segmented)
+    {
+        gslic_engine->Perform_Segmentation(reference_rgb_image);    
+        gslic_segmented = true;
+    }
+    
+    const gSLIC::SpixelMap *spixel_map = gslic_engine->Get_sPixel_Map();
+    const gSLIC::IntImage *idx_map = gslic_engine->Get_Seg_Mask();
+    
+    Vector2i slic_map_size = spixel_map->noDims;
+    
+    dim3 blockSize(BLOCK_DIM, BLOCK_DIM);
+	dim3 gridSize((int)ceil((float)slic_map_size.x / (float)blockSize.x), (int)ceil((float)slic_map_size.y / (float)blockSize.y));
+    
+    int radius = gslic_settings.spixel_size*1.5f;
+
+    accum_filter_data_in_spixel_device<<<gridSize,blockSize>>>(
+                spixel_map->GetData(MEMORYDEVICE_CUDA),
+                filter_data_in->GetData(MEMORYDEVICE_CUDA),
+                idx_map->GetData(MEMORYDEVICE_CUDA),
+                gslic_accum_fdata->GetData(MEMORYDEVICE_CUDA),
+                gslic_accum_weight->GetData(MEMORYDEVICE_CUDA),
+                slic_map_size,
+                img_size,
+                radius,
+                filter_data_dim
+                );
+    
+    
+//    gslic_accum_fdata->UpdateHostFromDevice();
+//    gslic_accum_weight->UpdateHostFromDevice();
+    
+//    float* gslic_accum_ptr = gslic_accum_fdata->GetData(MEMORYDEVICE_CPU);
+//    float* gslic_weight_ptr = gslic_accum_weight->GetData(MEMORYDEVICE_CPU);
+//    const gSLIC::objects::spixel_info *info_ptr = spixel_map->GetData(MEMORYDEVICE_CPU);
+    
+//	for (int i = 0; i < slic_map_size.y; i++){
+//		for (int j = 0; j < slic_map_size.x; j++){
+//			for (int k = 0; k < dim; k++){
+//				out_data_ptr[(i*w + j)*dim + k] = gslic_accum_ptr[(i*slic_map_size.x + j)*dim+k] /  gslic_weight_ptr[i*slic_map_size.x + j];
+//			}
+//		}
+//	}
+    
+    
+//    ofstream ofs("/home/carl/Work/Code/debug/count.txt");
+//    for (int i = 0; i < slic_map_size.y; i++){
+//		for (int j = 0; j < slic_map_size.x; j++){
+////     ofs<<gslic_weight_ptr[i*slic_map_size.x + j]<<" ";
+//     ofs<<info_ptr[i*slic_map_size.x + j].no_pixels<<" ";
+//        }
+//        ofs<<endl;
+//    }
+//    ofs.close();
+
+    
+        // reset output data if not additive
+    float* fdata_out_ptr = filter_data_out->GetData(MEMORYDEVICE_CUDA);
+	if (!additive) ORcudaSafeCall(cudaMemset(fdata_out_ptr, 0, img_size.x*img_size.y*filter_data_dim*sizeof(float)));
+    
+    
+    gridSize = dim3((int)ceil((float)img_size.x / (float)blockSize.x), (int)ceil((float)img_size.y / (float)blockSize.y));
+
+    radius = max((int)ceil(bf_info->sigma_xy * 2 / gslic_settings.spixel_size),1);
+    
+    
+    filter_bilateral_superpixel_device<<<gridSize,blockSize>>>(
+                spixel_map->GetData(MEMORYDEVICE_CUDA),
+                gslic_accum_fdata->GetData(MEMORYDEVICE_CUDA),
+                gslic_accum_weight->GetData(MEMORYDEVICE_CUDA),
+                idx_map->GetData(MEMORYDEVICE_CUDA),
+                reference_rgb_image->GetData(MEMORYDEVICE_CUDA),
+                filter_data_in->GetData(MEMORYDEVICE_CUDA),
+                fdata_out_ptr,
+                slic_map_size,
+                img_size,
+                bf_info->xy_lookup_table->GetData(MEMORYDEVICE_CUDA),
+                bf_info->rgb_lookup_table->GetData(MEMORYDEVICE_CUDA),
+                filter_data_dim,
+                radius,
+                weight);
+    
+    if(out_data_ptr!=NULL){
+        filter_data_out->UpdateHostFromDevice();
+        memcpy(out_data_ptr, filter_data_out->GetData(MEMORYDEVICE_CPU), w*h*dim*sizeof(float));
+    }
+}
+
+
+
+void gMF::filter_engine::filter_gaussian(float weight, int dim, int w, int h, GF_info* gf_info, bool additive, float* out_data_ptr)
 {
     float *fdata_in_ptr = filter_data_in->GetData(MEMORYDEVICE_CUDA);
     float *fdata_out_ptr = filter_data_out->GetData(MEMORYDEVICE_CUDA);
@@ -333,9 +452,11 @@ void gMF::filter_engine::filter_gaussian(float* out_data_ptr, float weight, int 
         dim,
         weight
         );
-
+    
+    if(out_data_ptr!=NULL){
     filter_data_out->UpdateHostFromDevice();
     memcpy(out_data_ptr, filter_data_out->GetData(MEMORYDEVICE_CPU), w*h*dim*sizeof(float));
+    }
 }
 
 void gMF::filter_engine::bilateral_filter_post_processing(BF_info *bf_info, float *out_data_ptr)
