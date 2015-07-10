@@ -98,6 +98,12 @@ int main(int argc, char** argv){
     gMF::GF_info *my_GF_info = new gMF::GF_info(sigma_GF_xy);
     my_CRF->load_compatibility_function(pott_model_data);
     
+    cv::Size vid_size;vid_size.width = 2*W; vid_size.height = H;
+    cv::Mat vid_frame; vid_frame.create(vid_size,CV_8UC3);
+    
+    cv::VideoWriter vw;
+    vw.open("/home/carl/Work/Data/gMF/me_out.avi",VideoWriter::fourcc('M','J','P','G'),30,vid_size);
+
     
     int frame_id=0;
     
@@ -127,6 +133,11 @@ int main(int argc, char** argv){
             my_CRF->get_Q_distribution(Q_dist_data); 
             Q_dist_to_labeling(labeling_data,Q_dist_data,W,H,M);
             draw_image_from_labeling(seg_frame,labeling_data,W,H);
+            
+            ori_frame.copyTo(vid_frame(Range::all(),Range(0,W)));
+            seg_frame.copyTo(vid_frame(Range::all(),Range(W,2*W)));
+            
+            vw<<vid_frame;
         }
         
         
@@ -151,6 +162,8 @@ int main(int argc, char** argv){
         if (key == 'q' )
             show_frames = false;
     }
+    
+    
     
 	return 0;
  
