@@ -4,6 +4,7 @@
 #include "opencv2/opencv.hpp"
 
 using namespace cv;
+using namespace std;
 
 int no_colors = 0;
 int color_map[255]={0};
@@ -35,6 +36,7 @@ void read_labling_from_image(int* out_labling, const Mat& in_img, int w, int h, 
             }
             out_labling[y*w+x] = c?i:-1;
         }
+    cout<<"no_lables: "<<no_colors<<endl;
 }
 
 void labeling_to_unary(float *out_unary, const int* in_labling, int w, int h, int M)

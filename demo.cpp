@@ -22,10 +22,10 @@ int main(int argc, char** argv){
     }
     
     //---------------   there are the parameters that you can play with --------------------------------------------------
-    const int M = 5;                                                                       // number of lables
-    const float sigma_BF_xy = 100;                                             // std of spatial kernel in bilateral filter
-    const float sigma_BF_rgb = 15;                                             // std of range kernel in bilateral filter
-    const float sigma_GF_xy = 3;                                               // std of Gaussian filter
+    const int M = 3;                                                                       // number of lables
+    const float sigma_BF_xy = 60;                                             // std of spatial kernel in bilateral filter
+    const float sigma_BF_rgb = 10;                                             // std of range kernel in bilateral filter
+    const float sigma_GF_xy = 5;                                               // std of Gaussian filter
 	const float weight_gaussian = 3.0;                                    // weight of gaussian filter
     const float weight_bilateralfilter = 10.0;                        // weight of bilateral filter
     const int no_iterations = 5;                                                  // number of interations
@@ -46,9 +46,11 @@ int main(int argc, char** argv){
     std::string image_path = argv[1];
     std::string anno_path = argv[2];
     std::string output_path = argv[3];
-
-	cv::Mat in_img = cv::imread(image_path,1);
+   
+    cv::Mat in_img = cv::imread(image_path,1);
     cv::Mat in_anno = cv::imread(anno_path,1);
+    
+    
     W = in_img.cols;
 	H = in_img.rows;
     

@@ -18,3 +18,14 @@ Then test with
 ```
 
 Play with the parameters in demo.cpp, have fun!
+
+
+Binary segmentation demo:
+
+```
+./bSeg ../data/me.mp4 ../data/msk.ppm
+./bSeg <input video> <mask image>
+
+'x' to next frame
+'z' to previous frame
+'q' to exit
