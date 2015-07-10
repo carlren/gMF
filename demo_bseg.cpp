@@ -45,8 +45,8 @@ int main(int argc, char** argv){
     
     //---------------   there are the parameters that you can play with --------------------------------------------------
     const int M = 3;                                                                       // number of lables
-    const float sigma_BF_xy = 40;                                             // std of spatial kernel in bilateral filter
-    const float sigma_BF_rgb = 20;                                             // std of range kernel in bilateral filter
+    const float sigma_BF_xy = 20;                                             // std of spatial kernel in bilateral filter
+    const float sigma_BF_rgb = 5;                                             // std of range kernel in bilateral filter
     const float sigma_GF_xy = 2;                                               // std of Gaussian filter
 	const float weight_gaussian = 1.0;                                    // weight of gaussian filter
     const float weight_bilateralfilter = 10.0;                        // weight of bilateral filter
