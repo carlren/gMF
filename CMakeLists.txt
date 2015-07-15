@@ -79,3 +79,6 @@ target_link_libraries(gMF_batch gMF_Lib ${OpenCV_LIBS})
 
 add_executable(bSeg demo_bseg.cpp NVTimer.h image_helper.h)
 target_link_libraries(bSeg gMF_Lib ${OpenCV_LIBS} )
+
+add_executable(gMF_binary demo_binary.cpp NVTimer.h image_helper.h)
+target_link_libraries(gMF_binary gMF_Lib ${OpenCV_LIBS} )
