@@ -41,7 +41,7 @@ void read_labling_from_image(int* out_labling, const Mat& in_img, int w, int h, 
 
 void labeling_to_unary(float *out_unary, const int* in_labling, int w, int h, int M)
 {
-    const float GT_PROB = 0.5;
+    const float GT_PROB = 0.7;
     const float u_energy = log( 1.0 / M );
 	const float n_energy = log( (1.0 - GT_PROB) / (M-1) );
 	const float p_energy = log( GT_PROB );
@@ -86,4 +86,27 @@ void create_pott_compatibility_func(float* in_model, int M)
     {
         in_model[i*M+i] = -1;
     }
+}
+
+
+void grayscale_to_binary_unary(float* out_unary, const Mat& gray_img, int w, int h)
+{
+    const float GT_PROB = 0.5f;
+    for(int y = 0;y<h;y++)
+        for (int x=0;x<w;x++)
+        {
+            float prob = GT_PROB * (float)gray_img.at<unsigned char>(y,x)/255.0f + GT_PROB/2;
+            out_unary[(y*w+x)*2] = log(prob) ;
+            out_unary[(y*w+x)*2+1] = log(1-prob) ;
+        }
+}
+
+void binary_Q_to_rgb(Mat& out_img, const float* in_Q, int w, int h)
+{
+    for(int y = 0;y<h;y++)
+        for (int x=0;x<w;x++)
+        {
+            if (in_Q[(y*w+x)*2] > in_Q[(y*w+x)*2+1]) out_img.at<Vec3b>(y,x) = Vec3b(255,255,255);
+            else out_img.at<Vec3b>(y,x) = Vec3b(0,0,0);
+        }
 }
