@@ -42,7 +42,7 @@ int main(int argc, char** argv){
         cout<<"Usage: ./bSeg <input video> <mask image>"<<endl;
         return -1;
     }
-    
+
     //---------------   there are the parameters that you can play with --------------------------------------------------
     const int M = 3;                                                                       // number of lables
     const float sigma_BF_xy = 20;                                             // std of spatial kernel in bilateral filter
@@ -52,8 +52,8 @@ int main(int argc, char** argv){
     const float weight_bilateralfilter = 10.0;                        // weight of bilateral filter
     const int no_iterations = 5;                                                  // number of interations
     //---------------------------------------------------------------------------------------------------------------------------------------------
-    
-    
+
+
     cout << "--------- running gMF with following configuration: ---------"<<endl;
     cout <<"M="<<M<<endl;
     cout <<"sigma_BF_xy ="<<sigma_BF_xy<<endl;
@@ -63,8 +63,8 @@ int main(int argc, char** argv){
     cout <<"weight_bilateralfilter = "<<weight_bilateralfilter<<endl;
     cout <<"no_iterations = "<<no_iterations<<endl;
     cout << "-----------------------------------------------------------------------------------"<<endl;
-    
-    
+
+
     std::string video_path = argv[1];
     std::string anno_path = argv[2];
     std::vector <cv::Mat3b> all_frames = load_video(video_path);
@@ -72,41 +72,41 @@ int main(int argc, char** argv){
     W = all_frames[0].cols/2;
     H = all_frames[0].rows/2;
     cv::Size tsize; tsize.width = W; tsize.height = H;
-        
+
     int *labeling_data = new int[W*H];
     float *unary_data = new float[W*H*M];
     float *Q_dist_data = new float[W*H*M];
     float *pott_model_data = new float[M*M];
-    
+
     bool show_frames = true;
     bool need_refresh = true;
-    
+
     cv::Mat ori_frame;
-    cv::Mat seg_frame; seg_frame.create(H,W,CV_8UC3); 
+    cv::Mat seg_frame; seg_frame.create(H,W,CV_8UC3);
     cv::Mat in_anno, tmp_anno;
-    
+
     tmp_anno = cv::imread(anno_path);
     cv::resize(tmp_anno,in_anno,tsize,0,0,INTER_NEAREST);
-    
-    read_labling_from_image(labeling_data, in_anno,W,H,M);   
-    labeling_to_unary(unary_data,labeling_data,W,H,M);     
+
+    read_labling_from_image(labeling_data, in_anno,W,H,M);
+    labeling_to_unary(unary_data,labeling_data,W,H,M);
     create_pott_compatibility_func(pott_model_data,M);
     StopWatchInterface *my_timer;  sdkCreateTimer(&my_timer);
-    
+
     gMF::inference_engine *my_CRF = new gMF::inference_engine(W,H,M);
 	gMF::BF_info *my_BF_info = new gMF::BF_info(sigma_BF_xy, sigma_BF_rgb);
     gMF::GF_info *my_GF_info = new gMF::GF_info(sigma_GF_xy);
     my_CRF->load_compatibility_function(pott_model_data);
-    
+
     cv::Size vid_size;vid_size.width = 2*W; vid_size.height = H;
     cv::Mat vid_frame; vid_frame.create(vid_size,CV_8UC3);
-    
-    cv::VideoWriter vw;
-    vw.open("/home/carl/Work/Data/gMF/me_out.avi",VideoWriter::fourcc('M','J','P','G'),30,vid_size);
 
-    
+    //cv::VideoWriter vw;
+    //vw.open("/home/carl/Work/Data/gMF/me_out.avi",VideoWriter::fourcc('M','J','P','G'),30,vid_size);
+
+
     int frame_id=0;
-    
+
     while(show_frames)
     {
         if(need_refresh)
@@ -115,7 +115,7 @@ int main(int argc, char** argv){
             cv::resize(all_frames[frame_id],tmp_frame,tsize);
             cv::flip(tmp_frame,ori_frame,0);
             need_refresh = false;
-            
+
             sdkResetTimer(&my_timer); sdkStartTimer(&my_timer);
             my_CRF->load_unary_potential(unary_data);
             my_CRF->exp_and_normalize();
@@ -129,22 +129,22 @@ int main(int argc, char** argv){
             }
             cudaThreadSynchronize();
             sdkStopTimer(&my_timer); printf("processed in:[%.2f]ms\n", sdkGetTimerValue(&my_timer)); cout<<flush;
-            
-            my_CRF->get_Q_distribution(Q_dist_data); 
+
+            my_CRF->get_Q_distribution(Q_dist_data);
             Q_dist_to_labeling(labeling_data,Q_dist_data,W,H,M);
             draw_image_from_labeling(seg_frame,labeling_data,W,H);
-            
+
             ori_frame.copyTo(vid_frame(Range::all(),Range(0,W)));
             seg_frame.copyTo(vid_frame(Range::all(),Range(W,2*W)));
-            
-            vw<<vid_frame;
+
+            //vw<<vid_frame;
         }
-        
-        
+
+
         cv::imshow("original", ori_frame);
         cv::imshow("segmentation",seg_frame);
-        
-        
+
+
         char key = cv::waitKey(10);
 
         if (key == 'x')
@@ -162,9 +162,9 @@ int main(int argc, char** argv){
         if (key == 'q' )
             show_frames = false;
     }
-    
-    
-    
+
+
+
 	return 0;
- 
+
     }

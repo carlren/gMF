@@ -1,7 +1,7 @@
 #include "gMF_inference_engine.h"
 #include "gMF_inference_engine_kernel.h"
 
-#include<iostream>
+//#include<iostream>
 
 using namespace gMF;
 
