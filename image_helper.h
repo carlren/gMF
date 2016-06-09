@@ -92,10 +92,11 @@ void create_pott_compatibility_func(float* in_model, int M)
 void grayscale_to_binary_unary(float* out_unary, const Mat& gray_img, int w, int h)
 {
     const float GT_PROB = 0.5f;
+    const float BASE_PROB = 0.3f;
     for(int y = 0;y<h;y++)
         for (int x=0;x<w;x++)
         {
-            float prob = GT_PROB * (float)gray_img.at<unsigned char>(y,x)/255.0f + GT_PROB/2;
+            float prob = GT_PROB * (float)gray_img.at<unsigned char>(y,x)/255.0f + BASE_PROB;
             out_unary[(y*w+x)*2] = log(prob) ;
             out_unary[(y*w+x)*2+1] = log(1-prob) ;
         }
@@ -108,5 +109,15 @@ void binary_Q_to_rgb(Mat& out_img, const float* in_Q, int w, int h)
         {
             if (in_Q[(y*w+x)*2] > in_Q[(y*w+x)*2+1]) out_img.at<Vec3b>(y,x) = Vec3b(255,255,255);
             else out_img.at<Vec3b>(y,x) = Vec3b(0,0,0);
+        }
+}
+
+void binary_Q_to_gray(Mat& out_img, const float* in_Q, int w, int h)
+{
+    for(int y = 0;y<h;y++)
+        for (int x=0;x<w;x++)
+        {
+            if (in_Q[(y*w+x)*2] > in_Q[(y*w+x)*2+1]) out_img.at<uchar>(y,x) = 255;
+            else out_img.at<uchar>(y,x) = 0;
         }
 }

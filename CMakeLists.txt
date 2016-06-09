@@ -3,7 +3,16 @@ project(gMF)
 #SET (CMAKE_VERBOSE_MAKEFILE true)
 
 find_package(CUDA REQUIRED)
-find_package(OpenCV REQUIRED)
+
+find_package(Boost 1.53.0 REQUIRED COMPONENTS chrono filesystem program_options system thread)
+add_library(boost INTERFACE)
+target_include_directories(boost INTERFACE ${Boost_INCLUDE_DIRS})
+target_link_libraries(boost INTERFACE ${Boost_LIBRARIES})
+
+find_package(OpenCV 3.0.0 REQUIRED)
+add_library(opencv INTERFACE)
+target_include_directories(opencv INTERFACE ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(opencv INTERFACE ${OpenCV_LIBS})
 
 IF(MSVC_IDE)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -65,23 +74,26 @@ cuda_add_library(gMF_Lib
 target_link_libraries(gMF_Lib ${CUDA_LIBRARY} gSLIC2_lib)
 
 
-add_executable(gMF demo.cpp NVTimer.h image_helper.h)
-target_link_libraries(gMF gMF_Lib ${OpenCV_LIBS})
+#add_executable(gMF demo.cpp NVTimer.h image_helper.h)
+#target_link_libraries(gMF gMF_Lib ${OpenCV_LIBS})
 
-add_executable(demo_debug demo_backup.cpp NVTimer.h)
-target_link_libraries(demo_debug gMF_Lib ${OpenCV_LIBS})
+#add_executable(demo_debug demo_backup.cpp NVTimer.h)
+#target_link_libraries(demo_debug gMF_Lib ${OpenCV_LIBS})
 
-add_executable(gSLIC demo_gslic.cpp)
-target_link_libraries(gSLIC gSLIC2_lib ${OpenCV_LIBS} )
+#add_executable(gSLIC demo_gslic.cpp)
+#target_link_libraries(gSLIC gSLIC2_lib ${OpenCV_LIBS} )
 
-add_executable(gMF_batch batch.cpp NVTimer.h image_helper.h)
-target_link_libraries(gMF_batch gMF_Lib ${OpenCV_LIBS})
+#add_executable(gMF_batch batch.cpp NVTimer.h image_helper.h)
+#target_link_libraries(gMF_batch gMF_Lib ${OpenCV_LIBS})
 
-add_executable(bSeg demo_bseg.cpp NVTimer.h image_helper.h)
-target_link_libraries(bSeg gMF_Lib ${OpenCV_LIBS} )
+#add_executable(bSeg demo_bseg.cpp NVTimer.h image_helper.h)
+#target_link_libraries(bSeg gMF_Lib ${OpenCV_LIBS} )
 
-add_executable(gMF_binary demo_binary.cpp NVTimer.h image_helper.h)
-target_link_libraries(gMF_binary gMF_Lib ${OpenCV_LIBS} )
+#add_executable(gMF_binary demo_binary.cpp NVTimer.h image_helper.h)
+#target_link_libraries(gMF_binary gMF_Lib ${OpenCV_LIBS} )
 
-add_executable(Tool_video2frames tool_video2frames.cpp)
-target_link_libraries(Tool_video2frames gMF_Lib ${OpenCV_LIBS} )
+#add_executable(Tool_video2frames tool_video2frames.cpp)
+#target_link_libraries(Tool_video2frames gMF_Lib ${OpenCV_LIBS} )
+
+add_executable(gMF_FyuseSeg fyuse_batch_seg.cpp)
+target_link_libraries(gMF_FyuseSeg gMF_Lib opencv boost)
