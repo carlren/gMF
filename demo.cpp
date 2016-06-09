@@ -23,12 +23,12 @@ int main(int argc, char** argv){
     
     //---------------   there are the parameters that you can play with --------------------------------------------------
     const int M = 3;                                                                       // number of lables
-    const float sigma_BF_xy = 40;                                             // std of spatial kernel in bilateral filter
-    const float sigma_BF_rgb = 10;                                             // std of range kernel in bilateral filter
+    const float sigma_BF_xy = 20;                                             // std of spatial kernel in bilateral filter
+    const float sigma_BF_rgb = 15;                                             // std of range kernel in bilateral filter
     const float sigma_GF_xy = 5;                                               // std of Gaussian filter
-	const float weight_gaussian = 5.0;                                    // weight of gaussian filter
+	  const float weight_gaussian = 5.0;                                    // weight of gaussian filter
     const float weight_bilateralfilter = 10.0;                        // weight of bilateral filter
-    const int no_iterations = 5;                                                  // number of interations
+    const int no_iterations = 10;                                                  // number of interations
     //---------------------------------------------------------------------------------------------------------------------------------------------
     
     
@@ -108,6 +108,16 @@ int main(int argc, char** argv){
     cv::Mat out_img; out_img.create(H,W,CV_8UC3); 
     draw_image_from_labeling(out_img,labeling_data,W,H);
     
+    cv::cvtColor(out_img,out_img,cv::COLOR_BGR2GRAY);
+    cv::GaussianBlur(out_img,out_img,Size(7,7),0);
+    cv::threshold(out_img,out_img,200,255,CV_8UC1);
+    cv::cvtColor(out_img,out_img,cv::COLOR_GRAY2BGR);
+    
+    cv::addWeighted(out_img,0.5,in_img,0.5,1,out_img);
+    // cv::addWeighted(out_img,0.7,in_anno,0.3,1,out_img);
+    
+    
+    
     if(need_resize)
     {
         cv::Mat tmp_img; out_img.copyTo(tmp_img);
@@ -117,7 +127,7 @@ int main(int argc, char** argv){
 	std::vector<int> compression_params;
 	compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
 	compression_params.push_back(9);
-    cv::imwrite(output_path,out_img);
+  cv::imwrite(output_path,out_img);
 
     delete my_CRF;
     delete labeling_data;

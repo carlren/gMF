@@ -24,10 +24,10 @@ int main(int argc, char** argv){
     
     //---------------   there are the parameters that you can play with --------------------------------------------------
     const int M = 2;                                                                       // number of lables
-    const float sigma_BF_xy = 30;                                             // std of spatial kernel in bilateral filter
-    const float sigma_BF_rgb = 10;                                             // std of range kernel in bilateral filter
+    const float sigma_BF_xy = 40;                                             // std of spatial kernel in bilateral filter
+    const float sigma_BF_rgb = 15;                                             // std of range kernel in bilateral filter
     const float sigma_GF_xy = 3;                                               // std of Gaussian filter
-	const float weight_gaussian = 3.0;                                    // weight of gaussian filter
+	  const float weight_gaussian = 5.0;                                    // weight of gaussian filter
     const float weight_bilateralfilter = 10.0;                        // weight of bilateral filter
     const int no_iterations = 5;                                                  // number of interations
     //---------------------------------------------------------------------------------------------------------------------------------------------
@@ -49,8 +49,21 @@ int main(int argc, char** argv){
     std::string anno_path = argv[2];
     std::string output_path = argv[3];
    
-    cv::Mat in_img = cv::imread(image_path,1);
+    cv::Mat in_img = cv::imread(image_path);
     cv::Mat in_anno = cv::imread(anno_path,cv::IMREAD_GRAYSCALE);
+    
+    cv::Mat original_img = in_img.clone();
+    
+    if (in_img.cols>320)
+    {
+      cv::resize(in_img,in_img,original_img.size()/2);
+      cv::resize(in_anno,in_anno,original_img.size()/2);
+      
+      // cv::imshow("img",in_img);
+      // cv::imshow("anno",in_anno);
+      // cv::waitKey();
+    }
+    
     
     W = in_img.cols;
     H = in_img.rows;
@@ -78,7 +91,7 @@ int main(int argc, char** argv){
     StopWatchInterface *my_timer;
 
     gMF::inference_engine *my_CRF = new gMF::inference_engine(W,H,M);
-	gMF::BF_info *my_BF_info = new gMF::BF_info(sigma_BF_xy, sigma_BF_rgb);
+	  gMF::BF_info *my_BF_info = new gMF::BF_info(sigma_BF_xy, sigma_BF_rgb);
     gMF::GF_info *my_GF_info = new gMF::GF_info(sigma_GF_xy);
 
     my_CRF->load_reference_image(in_img.data, W, H);
@@ -109,11 +122,25 @@ int main(int argc, char** argv){
         cv::Mat tmp_img; out_img.copyTo(tmp_img);
         cv::resize(tmp_img, out_img,Size(tmpW,tmpH),0,0,INTER_NEAREST);
     }
-    
-	std::vector<int> compression_params;
-	compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
-	compression_params.push_back(9);
-    cv::imwrite(output_path,out_img);
+  
+  // cv::resize(out_img,out_img,out_img.size()/4);
+  cv::GaussianBlur(out_img,out_img,cv::Size(5,5),0);
+  cv::GaussianBlur(out_img,out_img,cv::Size(5,5),0);
+  cv::GaussianBlur(out_img,out_img,cv::Size(5,5),0);
+  cv::resize(out_img,out_img,original_img.size());
+  
+  // out_img =  out_img + cv::Scalar(50);
+  
+  cv::Mat src[] = {original_img, out_img};
+  int from_to[] = {0,0,1,1,2,2,3,3};
+  cv::Mat rgba_image(original_img.size(),CV_8UC4);
+  cv::mixChannels(src,2,&rgba_image,1,from_to,4);
+  cv::imwrite(output_path,rgba_image);
+      
+	// std::vector<int> compression_params;
+	// compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
+	// compression_params.push_back(9);
+  //   cv::imwrite(output_path,out_img);
 
     delete my_CRF;
     delete unary_data;

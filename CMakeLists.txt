@@ -82,3 +82,6 @@ target_link_libraries(bSeg gMF_Lib ${OpenCV_LIBS} )
 
 add_executable(gMF_binary demo_binary.cpp NVTimer.h image_helper.h)
 target_link_libraries(gMF_binary gMF_Lib ${OpenCV_LIBS} )
+
+add_executable(Tool_video2frames tool_video2frames.cpp)
+target_link_libraries(Tool_video2frames gMF_Lib ${OpenCV_LIBS} )

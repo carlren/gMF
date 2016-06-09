@@ -25,7 +25,7 @@ std::vector <cv::Mat3b> load_video(string input_filename)
     {
         cv::Mat3b frame;
         video_capture.retrieve (frame);
-        frames.push_back (frame.clone ());
+        frames.push_back (frame.clone ());        
     }
     if (frames.empty ())
     {
@@ -39,18 +39,18 @@ std::vector <cv::Mat3b> load_video(string input_filename)
 int main(int argc, char** argv){
 
     if(argc<3){
-        cout<<"Usage: ./bSeg <input video> <mask image>"<<endl;
+        cout<<"Usage: ./bSeg <input video> <mask video>"<<endl;
         return -1;
     }
 
     //---------------   there are the parameters that you can play with --------------------------------------------------
-    const int M = 3;                                                                       // number of lables
-    const float sigma_BF_xy = 20;                                             // std of spatial kernel in bilateral filter
-    const float sigma_BF_rgb = 5;                                             // std of range kernel in bilateral filter
-    const float sigma_GF_xy = 2;                                               // std of Gaussian filter
-	const float weight_gaussian = 1.0;                                    // weight of gaussian filter
-    const float weight_bilateralfilter = 10.0;                        // weight of bilateral filter
-    const int no_iterations = 5;                                                  // number of interations
+    const int M = 2; // number of lable
+    const float sigma_BF_xy = 30; // std of spatial kernel in bilateral filter
+    const float sigma_BF_rgb = 5; // std of range kernel in bilateral filter
+    const float sigma_GF_xy = 3; // std of Gaussian filter
+	  const float weight_gaussian = 5.0; // weight of gaussian filter
+    const float weight_bilateralfilter = 10.0; // weight of bilateral filter
+    const int no_iterations = 5;// number of interations
     //---------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -68,9 +68,11 @@ int main(int argc, char** argv){
     std::string video_path = argv[1];
     std::string anno_path = argv[2];
     std::vector <cv::Mat3b> all_frames = load_video(video_path);
+    std::vector <cv::Mat3b> all_masks = load_video(anno_path);
+    
     int W, H;
-    W = all_frames[0].cols/2;
-    H = all_frames[0].rows/2;
+    W = all_frames[0].cols;
+    H = all_frames[0].rows;
     cv::Size tsize; tsize.width = W; tsize.height = H;
 
     int *labeling_data = new int[W*H];
@@ -85,39 +87,46 @@ int main(int argc, char** argv){
     cv::Mat seg_frame; seg_frame.create(H,W,CV_8UC3);
     cv::Mat in_anno, tmp_anno;
 
-    tmp_anno = cv::imread(anno_path);
-    cv::resize(tmp_anno,in_anno,tsize,0,0,INTER_NEAREST);
-
+    cv::cvtColor(all_masks[0],tmp_anno,cv::COLOR_BGR2GRAY);
+    cv::threshold(tmp_anno,tmp_anno,100,255,cv::THRESH_BINARY);
+    cv::cvtColor(tmp_anno,in_anno,CV_GRAY2BGR);
+    
     read_labling_from_image(labeling_data, in_anno,W,H,M);
     labeling_to_unary(unary_data,labeling_data,W,H,M);
     create_pott_compatibility_func(pott_model_data,M);
     StopWatchInterface *my_timer;  sdkCreateTimer(&my_timer);
 
     gMF::inference_engine *my_CRF = new gMF::inference_engine(W,H,M);
-	gMF::BF_info *my_BF_info = new gMF::BF_info(sigma_BF_xy, sigma_BF_rgb);
+	  gMF::BF_info *my_BF_info = new gMF::BF_info(sigma_BF_xy, sigma_BF_rgb);
     gMF::GF_info *my_GF_info = new gMF::GF_info(sigma_GF_xy);
     my_CRF->load_compatibility_function(pott_model_data);
 
     cv::Size vid_size;vid_size.width = 2*W; vid_size.height = H;
     cv::Mat vid_frame; vid_frame.create(vid_size,CV_8UC3);
 
-    //cv::VideoWriter vw;
-    //vw.open("/home/carl/Work/Data/gMF/me_out.avi",VideoWriter::fourcc('M','J','P','G'),30,vid_size);
-
-
     int frame_id=0;
-
+    my_CRF->load_unary_potential(unary_data);
+    
     while(show_frames)
     {
         if(need_refresh)
         {
             cv::Mat tmp_frame;
             cv::resize(all_frames[frame_id],tmp_frame,tsize);
-            cv::flip(tmp_frame,ori_frame,0);
+            tmp_frame.copyTo(ori_frame);
             need_refresh = false;
 
             sdkResetTimer(&my_timer); sdkStartTimer(&my_timer);
+            
+            cv::cvtColor(all_masks[frame_id],tmp_anno,cv::COLOR_BGR2GRAY);
+            cv::threshold(tmp_anno,tmp_anno,100, 255,cv::THRESH_BINARY);
+            cv::cvtColor(tmp_anno,in_anno,CV_GRAY2BGR);
+            
+            cv::imshow("mask",in_anno);
+            read_labling_from_image(labeling_data, in_anno,W,H,M);
+            labeling_to_unary(unary_data,labeling_data,W,H,M);
             my_CRF->load_unary_potential(unary_data);
+            
             my_CRF->exp_and_normalize();
             my_CRF->load_reference_image(ori_frame.data, W, H);
             for (int i=0;i<5;i++){
@@ -140,9 +149,7 @@ int main(int argc, char** argv){
             //vw<<vid_frame;
         }
 
-
-        cv::imshow("original", ori_frame);
-        cv::imshow("segmentation",seg_frame);
+        cv::imshow("segmentation",vid_frame);
 
 
         char key = cv::waitKey(10);

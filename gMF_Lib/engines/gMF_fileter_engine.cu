@@ -161,10 +161,10 @@ void gMF::filter_engine::filter_bilateral(float weight, int dim, int w, int h, B
 
 
 // option 1: use splat-slice with passion sampling
-//    filter_bilateral_splat_slice(weight, dim, w, h, bf_info, additive, out_data_ptr);
+  //  filter_bilateral_splat_slice(weight, dim, w, h, bf_info, additive, out_data_ptr);
 
 // option 2: use direct passion sampling
-//      filter_bilateral_approximate(weight, dim, w, h, bf_info, additive, out_data_ptr);
+    //  filter_bilateral_approximate(weight, dim, w, h, bf_info, additive, out_data_ptr);
 
 // option 3: use super pixel sampling, better for big images    
   filter_bilateral_superpixel(weight,dim,w,h,bf_info,additive,out_data_ptr);
