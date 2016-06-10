@@ -82,7 +82,7 @@ int main(int argc, char** argv){
         cv::Mat frame = cv::imread(image_dir+ "/" + image_name_list[i],cv::IMREAD_COLOR);
         cv::Mat prob = cv::imread(prob_dir+ "/" + prob_name_list[i],cv::IMREAD_GRAYSCALE);
         
-        cv::resize(frame,frame,frame.size()/2);
+        cv::resize(frame,frame,cv::Size(frame.cols/2, frame.rows/2));
         cv::resize(prob,prob,frame.size());
         
         frames.push_back(frame);
@@ -92,11 +92,11 @@ int main(int argc, char** argv){
     
     //---------------   there are the parameters that you can play with --------------------------------------------------
     const int M = 2;                                                                       // number of lables
-    const float sigma_BF_xy = 40;                                             // std of spatial kernel in bilateral filter
-    const float sigma_BF_rgb = 15;                                             // std of range kernel in bilateral filter
+    const float sigma_BF_xy = 30;                                             // std of spatial kernel in bilateral filter
+    const float sigma_BF_rgb = 13  ;                                             // std of range kernel in bilateral filter
     const float sigma_GF_xy = 3;                                               // std of Gaussian filter
 	  const float weight_gaussian = 5.0;                                    // weight of gaussian filter
-    const float weight_bilateralfilter = 10.0;                        // weight of bilateral filter
+    const float weight_bilateralfilter = 5.0;                        // weight of bilateral filter
     const int no_iterations = 5;                                                  // number of interations
     
     
@@ -130,7 +130,7 @@ int main(int argc, char** argv){
     cv::Mat out_img(H,W,CV_8UC1); 
     cv::Mat tmp_img(H,W,CV_8UC1); 
     
-    Mat erode_kernel = getStructuringElement(cv::MORPH_OPEN,cv::Size(5, 5),cv::Point(2, 2) );
+    Mat erode_kernel = getStructuringElement(cv::MORPH_OPEN,cv::Size(3, 3),cv::Point(1, 1) );
     
     StopWatchInterface *my_timer;
     sdkCreateTimer(&my_timer);
@@ -161,15 +161,24 @@ int main(int argc, char** argv){
         
         binary_Q_to_gray(out_img,Q_dist_data,W,H);
               
-        cv::erode(out_img,tmp_img,erode_kernel,cv::Point(-1,-1),3);
-        cv::dilate(tmp_img,out_img,erode_kernel,cv::Point(-1,-1),3);
-        
-        
-      cv::GaussianBlur(out_img,out_img,cv::Size(5,5),0);
+        cv::erode(out_img,tmp_img,erode_kernel,cv::Point(-1,-1),2);
+        cv::floodFill(tmp_img,cv::Point(0,0),100);
+
+        for (int y=0;y<out_img.rows;y++)
+            for (int x=0;x<out_img.cols;x++)
+            {
+                if (tmp_img.at<uchar>(y,x)==100) out_img.at<uchar>(y,x) = 0;
+                else out_img.at<uchar>(y,x) = 255;
+            }
       
+      cv::GaussianBlur(out_img, out_img,cv::Size(5,5),0);
+      cv::GaussianBlur(out_img, out_img,cv::Size(5,5),0);
       cv::imwrite(output_dir + "/" + image_name_list[i] , out_img);  
       sdkStopTimer(&my_timer); 
       
+      
+      cv::imshow("result", out_img);
+      cv::waitKey();
       printf("total time per image :[%.2f]ms\n", sdkGetTimerValue(&my_timer));
       std::cout << std::flush;
     }

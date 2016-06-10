@@ -91,8 +91,8 @@ void create_pott_compatibility_func(float* in_model, int M)
 
 void grayscale_to_binary_unary(float* out_unary, const Mat& gray_img, int w, int h)
 {
-    const float GT_PROB = 0.5f;
-    const float BASE_PROB = 0.3f;
+    const float GT_PROB = 0.4f;
+    const float BASE_PROB = 0.4f;
     for(int y = 0;y<h;y++)
         for (int x=0;x<w;x++)
         {

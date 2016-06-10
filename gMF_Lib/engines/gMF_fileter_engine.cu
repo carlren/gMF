@@ -170,7 +170,7 @@ void gMF::filter_engine::filter_bilateral(float weight, int dim, int w, int h, B
   filter_bilateral_superpixel(weight,dim,w,h,bf_info,additive,out_data_ptr);
     
 // use post processing to smooth the result, can chose to turn off
-   bilateral_filter_post_processing(bf_info,out_data_ptr);
+//   bilateral_filter_post_processing(bf_info,out_data_ptr);
 
 }
 
